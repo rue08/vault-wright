@@ -1,27 +1,45 @@
+# Runs on the OCI VM, alongside other projects' own Compose stacks. nginx and
+# certbot run on the host, not in Compose; the live config is
+# /etc/nginx/sites-available/vaultwright on the VM.
+name: vaultwright
+
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
     volumes:
       - db_data:/var/lib/postgresql/data
+      # Applied in filename order, but only on the first boot of an empty volume.
       - ./migrations:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
+    # No published port - the api reaches this over the Compose network by
+    # service name ("db"), and `docker compose exec db psql` covers manual
+    # access. Nothing listens on the host at all.
+    healthcheck:
+      # $$ (not $) so Compose passes a literal $POSTGRES_USER for the
+      # container's own shell to expand, instead of substituting here.
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     build: .
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      DB_URL: ${DB_URL}
-      PORT: ${PORT}
+      # Built here so the password lives in one place. Use a hex password
+      # (openssl rand -hex 24): other characters would need URL-encoding.
+      DB_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PORT: 5000
     ports:
-      - "${PORT}:${PORT}"
+      # Loopback only: host nginx (TLS via certbot) is the sole way in.
+      - "127.0.0.1:5000:5000"
 
 volumes:
   db_data:
