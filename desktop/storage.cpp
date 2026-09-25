@@ -3,14 +3,6 @@
 #include <QUrl>
 #include <QDebug>
 
-namespace {
-// Always serves the latest revision -- no commit SHA in the path. The
-// developer edits this Gist's content by hand whenever the backend's real
-// (ngrok) URL changes; this URL itself is permanent and safe to hardcode.
-const QString kDiscoveryUrl = QStringLiteral(
-    "https://gist.githubusercontent.com/rue08/9a38be7fc8c3415224b8fcc0a0cd792d/raw/vaultwright-backend-url.txt");
-}
-
 Storage::Storage(QObject *parent)
     : QObject{parent}
 {
@@ -25,7 +17,6 @@ void Storage::setIdToken(const QString &idToken)
 QNetworkRequest Storage::buildRequest(const QUrl &url) const
 {
     QNetworkRequest request{url};
-    request.setRawHeader("ngrok-skip-browser-warning", "true");
     return request;
 }
 
@@ -72,35 +63,6 @@ void Storage::loginToBackend()
 }
 
 
-void Storage::fetchDiscoveryUrl()
-{
-    QNetworkRequest request{QUrl(kDiscoveryUrl)};
-    QNetworkReply *reply = networkAccessManager -> get(request);
-
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        QByteArray response = reply -> readAll();
-        bool ok = reply->error() == QNetworkReply::NoError;
-        QString transportError = reply->errorString();
-        reply->deleteLater();
-
-        if (!ok)
-        {
-            emit discoveryUrlFetchFailed(transportError);
-            return;
-        }
-
-        QString url = QString::fromUtf8(response).trimmed();
-        if (!url.startsWith("http://") && !url.startsWith("https://"))
-        {
-            emit discoveryUrlFetchFailed("The discovery file doesn't contain a valid URL.");
-            return;
-        }
-
-        emit discoveryUrlFetched(url);
-    });
-}
-
-
 QString Storage::extractError(QNetworkReply *reply, const QByteArray &response)
 {
     // The backend's error responses are shaped like {"error": "message"} --
@@ -115,16 +77,14 @@ QString Storage::extractError(QNetworkReply *reply, const QByteArray &response)
     }
 
     // Anything else that failed means something other than our backend code
-    // answered -- ngrok's own error page, a dropped connection, DNS failure,
-    // a sleeping laptop, etc. We can't reliably tell *which* of those it was
-    // (an expired tunnel and a briefly-offline backend can look identical
-    // from here), so don't guess -- just say plainly that the shared backend
-    // couldn't be reached, and point at the fix that covers both cases.
+    // answered -- a dropped connection, DNS failure, a proxy error page, an
+    // offline server, etc. We can't reliably tell *which* of those it was, so
+    // don't guess -- just say plainly that the backend couldn't be reached.
     if (reply->error() != QNetworkReply::NoError)
     {
         qWarning() << "Backend unreachable:" << reply->errorString();
-        return QStringLiteral("Can't reach the cloud backend right now. It may be offline, "
-                               "or its URL may have changed -- check Settings.");
+        return QStringLiteral("Can't reach the cloud backend right now. It may be offline -- "
+                               "check your connection and try Retry.");
     }
 
     return QString();

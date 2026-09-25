@@ -2,8 +2,6 @@
     <qresource prefix="/icons">
         <file>Icons/folder_code_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg</file>
         <file>Icons/folder_code_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg</file>
-        <file>Icons/settings_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg</file>
-        <file>Icons/settings_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg</file>
         <file>Icons/output_circle_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg</file>
         <file>Icons/output_circle_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg</file>
         <file>Icons/play_arrow_24dp_5985E1_FILL0_wght400_GRAD0_opsz24.svg</file>

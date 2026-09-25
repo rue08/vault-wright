@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 #include "monacoeditor.h"
 #include "terminal.h"
+#include "config.h"
 #include <QCloseEvent>
 #include <QMouseEvent>
 #include <QMessageBox>
@@ -39,10 +40,11 @@ MainWindow::MainWindow(QWidget *parent)
     storage = new Storage(this);
     loginWindow = new LoginWindow(this, this);
 
-    // No hardcoded default -- backend URL changes on every ngrok tunnel
-    // restart, so it's read fresh from settings each launch and only ever
-    // updated through the Settings action, never compiled in.
-    storage -> setBackendUrl(settings.value("backendUrl").toString());
+    // The backend URL is compiled in from config.h. Installs from before
+    // that saved their own (ngrok) URL under this key, which nothing reads
+    // anymore -- dropped so a dead value doesn't linger on their machine.
+    settings.remove("backendUrl");
+    storage -> setBackendUrl(BACKEND_URL);
 
     splitter = new QSplitter(Qt::Horizontal);
     setCentralWidget(splitter);
@@ -99,7 +101,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui -> toolBar -> addAction(ui -> actionRun);
     ui -> toolBar -> addAction(ui -> actionLogin);
     ui -> toolBar -> addAction(ui -> actionLogout);
-    ui -> toolBar -> addAction(ui -> actionSettings);
     ui -> actionUpload -> setEnabled(false);
     ui -> actionRetry -> setEnabled(false);
     ui -> actionLogout -> setEnabled(false);
@@ -863,19 +864,6 @@ void MainWindow::onEnableActionUpload(bool flag, const QString& idToken, const Q
 
 void MainWindow::establishBackendSession()
 {
-    QString backendUrl = settings.value("backendUrl").toString();
-    if (backendUrl.isEmpty())
-    {
-        // No backend URL saved yet -- a fresh install, or Settings was never
-        // opened on this machine. Nothing to try loginToBackend() against,
-        // so don't fail loudly against an empty URL -- wait for the user to
-        // fetch/enter one via Settings (Fetch is enabled now that they're
-        // signed in) and hit Retry, or OK, which retries automatically --
-        // see on_actionSettings_triggered().
-        statusBar() -> showMessage("Signed in. Set your backend URL in Settings to sync files.", 5000);
-        return;
-    }
-
     // Establishes/refreshes the users row for this session before anything
     // else is allowed to touch /files -- see onBackendLoginSucceeded().
     pendingBackendSuccessMessage = "Successfully logged in.";
@@ -886,10 +874,9 @@ void MainWindow::establishBackendSession()
 void MainWindow::on_actionRetry_triggered()
 {
     // Manual retry, for when the backend was unreachable and has since come
-    // back (or Settings was updated without going through its own OK-retries
-    // path) -- reuses the exact same call establishBackendSession()/Settings
-    // do, so success/failure feedback (onBackendLoginSucceeded/Failed) is
-    // identical either way, aside from the success message below. No interim
+    // back -- reuses the exact same call establishBackendSession() does, so
+    // success/failure feedback (onBackendLoginSucceeded/Failed) is identical
+    // either way, aside from the success message below. No interim
     // "Retrying..." message -- loginToBackend() usually resolves fast enough
     // that it just gets instantly stomped on by the real result anyway.
     pendingBackendSuccessMessage = "Successfully refreshed.";
@@ -914,86 +901,6 @@ void MainWindow::onBackendLoginFailed(const QString &errorString)
     // the backend happened to come back on its own.
     statusBar() -> showMessage("Logged in successfully, but the cloud backend is unreachable.", 5000);
     QMessageBox::warning(this, "Backend Unavailable", errorString);
-}
-
-
-void MainWindow::on_actionSettings_triggered()
-{
-    QDialog dialog(this);
-    dialog.setWindowTitle("Settings");
-    dialog.setMinimumWidth(440);
-
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-
-    layout -> addWidget(new QLabel("Backend URL (e.g. an ngrok tunnel):"));
-
-    QLineEdit *urlEdit = new QLineEdit(settings.value("backendUrl").toString());
-    layout -> addWidget(urlEdit);
-
-    QPushButton *fetchButton = new QPushButton("Fetch Latest from GitHub");
-    // Gating this on actionUpload's enabled state is only safe now that
-    // onBackendLoginFailed() no longer disables it -- actionUpload being
-    // enabled now genuinely tracks "signed in", nothing else, so this can't
-    // get stuck disabled by a backend outage the way it used to.
-    fetchButton -> setEnabled(ui -> actionUpload -> isEnabled());
-    layout -> addWidget(fetchButton);
-
-    QLabel *statusLabel = new QLabel();
-    statusLabel -> setWordWrap(true);
-    layout -> addWidget(statusLabel);
-
-    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    layout -> addWidget(buttonBox);
-
-    // Scoped to this dialog's lifetime via the &dialog context object --
-    // Qt auto-disconnects these the moment dialog goes out of scope below,
-    // so there's nothing left listening to storage's signals afterwards.
-    connect(fetchButton, &QPushButton::clicked, &dialog, [this, &dialog, fetchButton, statusLabel]() {
-        fetchButton -> setEnabled(false);
-        statusLabel -> setText("Fetching...");
-        dialog.adjustSize();
-        storage -> fetchDiscoveryUrl();
-    });
-    connect(storage, &Storage::discoveryUrlFetched, &dialog, [&dialog, urlEdit, fetchButton, statusLabel](const QString &url) {
-        urlEdit -> setText(url);
-        statusLabel -> setText("Fetched the latest URL -- click OK to use it.");
-        fetchButton -> setEnabled(true);
-        // Changing statusLabel's wrapped text doesn't automatically grow the
-        // dialog window on its own -- without this, the new text just
-        // overlaps whatever's below it instead of pushing the window taller.
-        dialog.adjustSize();
-    });
-    connect(storage, &Storage::discoveryUrlFetchFailed, &dialog, [&dialog, fetchButton, statusLabel](const QString &errorString) {
-        statusLabel -> setText("Couldn't fetch the latest URL: " + errorString);
-        fetchButton -> setEnabled(true);
-        dialog.adjustSize();
-    });
-
-    connect(buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-    if (dialog.exec() != QDialog::Accepted)
-        return;
-
-    QString newUrl = urlEdit -> text().trimmed();
-    while (newUrl.endsWith('/'))
-        newUrl.chop(1);
-
-    settings.setValue("backendUrl", newUrl);
-    storage -> setBackendUrl(newUrl);
-
-    // setBackendUrl() alone doesn't hit any endpoint -- without this, a
-    // change made here (fetched or typed in) sits unused until the next full
-    // logout/login, which is the "need a refresh button" gap: already being
-    // signed in, this is what actually retries against the new URL.
-    if (ui -> actionUpload -> isEnabled())
-    {
-        // No interim "Reconnecting..." message -- same reasoning as
-        // on_actionRetry_triggered(): it just gets stomped on instantly by
-        // the real result on anything but a slow/failing connection.
-        pendingBackendSuccessMessage = "Successfully reconnected.";
-        storage -> loginToBackend();
-    }
 }
 
 
@@ -1553,9 +1460,6 @@ void MainWindow::applyTheme(bool isDark)
     // has no "system-tinted" notion for these) -- swapped explicitly here
     // rather than via QPalette, which only reaches palette-driven native
     // widget chrome, not icon pixmaps.
-    ui -> actionSettings -> setIcon(QIcon(isDark
-        ? ":/icons/Icons/settings_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg"
-        : ":/icons/Icons/settings_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg"));
     ui -> actionLogin -> setIcon(QIcon(isDark
         ? ":/icons/Icons/login_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg"
         : ":/icons/Icons/login_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg"));

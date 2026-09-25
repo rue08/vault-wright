@@ -185,24 +185,6 @@
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
-  <action name="actionSettings">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/icons/Icons/settings_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/Icons/settings_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Settings</string>
-   </property>
-   <property name="toolTip">
-    <string>Settings</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::NoRole</enum>
-   </property>
-  </action>
   <action name="actionSave">
    <property name="text">
     <string>Save</string>

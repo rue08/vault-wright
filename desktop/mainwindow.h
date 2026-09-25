@@ -74,11 +74,9 @@ private slots:
 
     void on_actionUpload_triggered();
 
-    // Manually retries the backend connection (loginToBackend(), which
-    // on_actionSettings_triggered() already reuses after a URL change) --
-    // lives right below Upload in the toolbar for when the backend was
-    // unreachable and has since come back, or the URL was just fixed via
-    // Settings, without needing to reopen Settings again just to trigger it.
+    // Manually retries the backend connection (loginToBackend()) -- lives
+    // right below Upload in the toolbar for when the backend was unreachable
+    // and has since come back.
     void on_actionRetry_triggered();
 
     // File menu equivalents of the toolbar Upload button and (new)
@@ -117,7 +115,6 @@ private slots:
 
     void onBackendLoginSucceeded();
     void onBackendLoginFailed(const QString &errorString);
-    void on_actionSettings_triggered();
 
     // Profile > Delete Account -- confirms with the user, then starts the
     // deletion chain via storage->deleteAccount(). deleteAccountAction is
@@ -243,19 +240,14 @@ private:
     void refreshTreeIcons();
 
     // Called right after a successful sign-in (onEnableActionUpload()) to
-    // actually reach the backend. If a backend URL is already saved, this is
-    // just storage->loginToBackend(). If not -- a fresh install, or a device
-    // that's never had Settings configured -- there's nothing to try yet, so
-    // this just says so and waits: the user fetches/enters a URL via
-    // Settings (Fetch is enabled now that they're signed in) and either hits
-    // Retry or OK, both of which retry on their own.
+    // actually reach the backend -- just storage->loginToBackend(), with the
+    // "logged in" success message.
     void establishBackendSession();
 
     // What onBackendLoginSucceeded() shows -- set by whichever of
-    // establishBackendSession()/on_actionRetry_triggered()/
-    // on_actionSettings_triggered() is about to call loginToBackend(), since
-    // "logged in" is only accurate for the first of those; the other two are
-    // reconnecting an already-established session, not starting a new one.
+    // establishBackendSession()/on_actionRetry_triggered() is about to call
+    // loginToBackend(), since "logged in" is only accurate for the first;
+    // Retry is reconnecting an already-established session.
     QString pendingBackendSuccessMessage;
 
     Ui::MainWindow *ui;

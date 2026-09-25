@@ -23,11 +23,9 @@ public:
 
     void setIdToken(const QString &idToken);
 
-    // Base URL of the self-hosted backend (e.g. "http://localhost:3000" or
-    // an ngrok tunnel), with no trailing slash. Unlike the Firebase REST
-    // endpoints this replaces, it's not a compile-time constant -- it's
-    // meant to be user-configurable, since it can change on every tunnel
-    // restart. Every request below is built against this.
+    // Base URL of the self-hosted backend (BACKEND_URL from config.h, e.g.
+    // "https://api.example.com"). Trailing slashes are trimmed. Every
+    // request below is built against this.
     void setBackendUrl(const QString &backendUrl);
 
     // Verifies the current idToken against the backend and upserts the
@@ -85,14 +83,6 @@ public:
     void resumeAfterTokenRefresh(const QString &idToken);
     void abandonPendingRetries();
 
-    // Fetches the current backend URL from a fixed, permanent discovery
-    // endpoint (a GitHub Gist kept up to date by hand whenever the backend's
-    // real URL changes, e.g. an ngrok restart). Entirely unauthenticated and
-    // unrelated to idToken/backendUrl above -- lets Settings offer a "Fetch
-    // latest" shortcut instead of everyone needing to be told the new URL by
-    // hand. Reports discoveryUrlFetched() or discoveryUrlFetchFailed().
-    void fetchDiscoveryUrl();
-
 private:
     QNetworkAccessManager *networkAccessManager;
     QNetworkRequest newRequest;
@@ -118,12 +108,9 @@ private:
     bool refreshInProgress = false;
     QVector<std::function<void(bool refreshed)>> pendingRetries;
 
-    // Builds a QNetworkRequest for `url` with the header ngrok's free tier
-    // requires to skip its "you are about to visit..." browser-warning
-    // interstitial (ERR_NGROK_6024) -- without it, every GET through the
-    // tunnel comes back as that warning page's HTML instead of a real
-    // response. All requests below go through this instead of constructing
-    // QNetworkRequest directly, so no future endpoint can forget it.
+    // Builds a QNetworkRequest for `url`. All requests below go through this
+    // instead of constructing QNetworkRequest directly, so any header every
+    // request needs has one place to live.
     QNetworkRequest buildRequest(const QUrl &url) const;
 
     void startUpload(const QByteArray &fileData, const QString &localFilePath);
@@ -195,9 +182,6 @@ signals:
 
     void backendLoginSucceeded();
     void backendLoginFailed(const QString &errorString);
-
-    void discoveryUrlFetched(const QString &url);
-    void discoveryUrlFetchFailed(const QString &errorString);
 
     // Storage has no access to Authenticator -- this just asks whoever owns
     // both to perform a refresh and report back via resumeAfterTokenRefresh()
