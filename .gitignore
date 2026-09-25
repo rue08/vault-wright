@@ -35,6 +35,10 @@ windows/mingw64/
 # is gitignored.)
 third_party/monaco/
 
+# Release-building notes kept locally only; not shown to people browsing the repo.
+windows/README.md
+third_party/README.md
+
 # Real Firebase/Google OAuth config -- GOOGLE_OAUTH_CLIENT_SECRET's GOCSPX-...
 # shape trips GitHub's push protection, and there's no external contributor
 # audience for the rest of it either (see README's Getting Started). Copy
