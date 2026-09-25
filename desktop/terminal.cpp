@@ -107,8 +107,8 @@ void Terminal::runFile(const QString &filePath)
         QMessageBox::warning(mainWindow, "No Compiler Found",
             "No C++ compiler found.\n\n"
             "Expected a bundled one at \"" + bundledGpp + "\", and none was found on PATH either. "
-            "See windows/README.md for bundling MinGW-w64, or install it yourself and make sure "
-            "g++ is on PATH.");
+            "See BUILD.md in the VaultWright repository for bundling MinGW-w64, or install it "
+            "yourself and make sure g++ is on PATH.");
         return;
     }
 

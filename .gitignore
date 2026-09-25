@@ -27,17 +27,17 @@ build/
 
 # Bundled Windows MinGW-w64 toolchain -- too large for git, fetched/placed
 # manually per windows/README.md, not tracked as source.
-windows/mingw64/
+desktop/windows/mingw64/
 
 # Vendored Monaco Editor build -- too large for git, fetched via
 # third_party/fetch-monaco.sh, not tracked as source. (monaco-host/, the
 # small bridge page that loads it, *is* tracked -- only this vendored part
 # is gitignored.)
-third_party/monaco/
+desktop/third_party/monaco/
 
 # Release-building notes kept locally only; not shown to people browsing the repo.
-windows/README.md
-third_party/README.md
+desktop/windows/README.md
+desktop/third_party/README.md
 
 # Real Firebase/Google OAuth config -- GOOGLE_OAUTH_CLIENT_SECRET's GOCSPX-...
 # shape trips GitHub's push protection, and there's no external contributor
