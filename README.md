@@ -22,7 +22,7 @@ The main aim is to build a full-featured project, and it's under active developm
 - **Framework**: Qt (Widgets + Network + WebEngine + WebChannel)
 - **Editor**: [Monaco Editor](https://microsoft.github.io/monaco-editor/), embedded via `QWebEngineView`
 - **Auth**: Firebase Authentication (Google sign-in only)
-- **File storage**: [Node.js + PostgreSQL backend](server/) (`server/`) — Firebase ID tokens in,
+- **File storage**: [Node.js + PostgreSQL backend](backend/) (`backend/`) — Firebase ID tokens in,
   files out; no Firestore/Cloud Storage involved. One instance is hosted centrally for you, see
   **Cloud Backend** below — you never need to run this yourself.
 - **Compiler**: g++
@@ -49,7 +49,7 @@ Want to build it yourself instead? See [BUILD.md](BUILD.md).
 
 ## Cloud Backend
 
-File storage (upload/list/download) talks to a [`server/`](server/) Node.js + PostgreSQL
+File storage (upload/list/download) talks to a [`backend/`](backend/) Node.js + PostgreSQL
 backend, not Firebase — but as a user, **you don't need to run this yourself.** One instance is
 hosted centrally at `https://vaultwright.duckdns.org`.
 

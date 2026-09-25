@@ -1,7 +1,7 @@
 # Building VaultWright from source
 
 This page is for building the desktop app yourself. If you just want to use VaultWright, download
-the latest build from the [Releases page](https://github.com/rue08/VaultWright/releases) instead — it works out of the box, including cloud sync.
+the latest build from the [Releases page](https://github.com/rue08/vault-wright/releases) instead — it works out of the box, including cloud sync.
 
 ## Read this first: a source build can't use the hosted cloud backend
 
@@ -25,9 +25,12 @@ still use those.
 
 ## 1. Get the source
 
+The desktop app lives in `desktop/` and the cloud server in `backend/`. Steps 2–5 run from
+`desktop/`.
+
 ```bash
-git clone https://github.com/rue08/VaultWright.git
-cd VaultWright
+git clone https://github.com/rue08/vault-wright.git
+cd vault-wright/desktop
 ```
 
 ## 2. Create `config.h`
@@ -65,11 +68,11 @@ Skip this if you already have `g++` on your `PATH`: the Run button will use it. 
 make a build that runs C++ on a machine with no compiler installed.
 
 1. Download a portable x86_64 MinGW-w64 build, for example from [WinLibs](https://winlibs.com/).
-2. Unzip it so you end up with `windows/mingw64/bin/g++.exe` (and its `.dll` files beside it).
+2. Unzip it so you end up with `desktop/windows/mingw64/bin/g++.exe` (and its `.dll` files beside it).
 
 **Do this before your first `cmake -B build`.** CMake checks for the folder while *configuring*,
 not building, so if you add it later the copy step is silently never added. If you already
-configured, delete `build/` and configure again. `windows/mingw64/` is gitignored, and a full
+configured, delete `build/` and configure again. `desktop/windows/mingw64/` is gitignored, and a full
 toolchain adds roughly 150–400 MB to the output.
 
 ## 5. Build
@@ -81,18 +84,18 @@ cmake -B build -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.x/<platform>
 cmake --build build
 ```
 
-Alternatively, open `CMakeLists.txt` in Qt Creator and build from there. The result is
-`VaultWright.app` (macOS) or `VaultWright.exe` (Windows) inside `build/`. The Monaco editor is
+Alternatively, open `desktop/CMakeLists.txt` in Qt Creator and build from there. The result is
+`VaultWright.app` (macOS) or `VaultWright.exe` (Windows) inside `desktop/build/`. The Monaco editor is
 copied next to it as a `monaco/` folder, and the app needs that folder beside it to run.
 
 ## 6. Server (only for cloud features)
 
-The cloud backend is a Node.js + PostgreSQL server in `server/`, built and run with Docker. Use the
+The cloud backend is a Node.js + PostgreSQL server in `backend/`, built and run with Docker. Use the
 **same Firebase project** as in step 2: the server only accepts sign-ins from the project id you give
 it.
 
 ```bash
-cd server
+cd ../backend
 cp .env.example .env
 ```
 
@@ -109,7 +112,7 @@ docker compose up -d --build
 curl http://127.0.0.1:5000/health     # {"ok":true}
 ```
 
-This builds the image from `server/Dockerfile` and starts PostgreSQL, whose tables are created
+This builds the image from `backend/Dockerfile` and starts PostgreSQL, whose tables are created
 automatically the first time it boots on an empty volume. Compose refuses to start if
 `POSTGRES_PASSWORD` or `FIREBASE_PROJECT_ID` is missing. The server listens only on `127.0.0.1:5000`
 and the database isn't exposed. Stop it with `docker compose down`.
@@ -126,4 +129,4 @@ Finally, set `BACKEND_URL` in `config.h` to `http://127.0.0.1:5000` and rebuild 
 | Sign-in fails | Check your Firebase API key and that the OAuth client is type **Desktop app**. |
 | Signed in, but Upload or The Vault fails with 401 | The server's `FIREBASE_PROJECT_ID` isn't the project your `config.h` keys belong to, or the app is still pointed at the hosted backend (see step 6). |
 | Signed in, but Upload or The Vault can't connect | The server isn't running, or `BACKEND_URL` in `config.h` is wrong. |
-| `docker compose up` says a variable is not set | `POSTGRES_PASSWORD` or `FIREBASE_PROJECT_ID` is missing from `server/.env`. |
+| `docker compose up` says a variable is not set | `POSTGRES_PASSWORD` or `FIREBASE_PROJECT_ID` is missing from `backend/.env`. |
