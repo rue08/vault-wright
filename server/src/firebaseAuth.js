@@ -5,7 +5,12 @@
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 
-const FIREBASE_PROJECT_ID = 'mehul-s-ide';
+// The Firebase project whose tokens this server accepts. No default on purpose: a server
+// silently trusting somebody else's project is worse than one that refuses to start.
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+if (!FIREBASE_PROJECT_ID) {
+  throw new Error('FIREBASE_PROJECT_ID is not set -- add it to .env (Firebase Console -> Project settings -> General -> Project ID)');
+}
 const ISSUER = `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`;
 const JWKS_URI = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 
