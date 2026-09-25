@@ -45,6 +45,8 @@ Download the latest build from the [Releases page](https://github.com/rue08/Vaul
 Sign-in works out of the box once installed. Cloud file storage talks to a central backend
 that's already running for you — nothing to set up on your end (see **Cloud Backend** below).
 
+Want to build it yourself instead? See [BUILD.md](BUILD.md).
+
 ## Cloud Backend
 
 File storage (upload/list/download) talks to a [`server/`](server/) Node.js + PostgreSQL

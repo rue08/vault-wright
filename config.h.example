@@ -9,8 +9,12 @@
 // - GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET: Google Cloud
 //   Console -> APIs & Services -> Credentials -> your "Desktop app" OAuth
 //   client.
+// - BACKEND_URL: where your VaultWright server (server/, see BUILD.md) is
+//   reachable, with no trailing slash -- e.g. "http://127.0.0.1:5000" for one
+//   running on the same machine.
 const QString FIREBASE_API_KEY = "TODO_PASTE_FIREBASE_API_KEY_HERE";
 const QString GOOGLE_OAUTH_CLIENT_ID = "TODO_PASTE_CLIENT_ID_HERE";
 const QString GOOGLE_OAUTH_CLIENT_SECRET = "TODO_PASTE_CLIENT_SECRET_HERE";
+const QString BACKEND_URL = "TODO_PASTE_BACKEND_URL_HERE";
 
 #endif // CONFIG_H
