@@ -64,6 +64,15 @@ hosted centrally at `https://vaultwright.duckdns.org`.
 7. **Delete a cloud file** — select it (or several) in The Vault and use **File > Delete File from Cloud**; you'll be asked to confirm first.
 8. **Delete your account** — choose **Profile > Delete Account** to permanently remove your account and every file you have stored in the cloud. You'll be asked to confirm, and it can't be undone.
 
+## Repository
+
+| Path | What is in it |
+|---|---|
+| `desktop/` | The Qt desktop app: C++ sources, UI files, icons, the Monaco editor bridge page and the Windows packaging files |
+| `backend/` | The Node.js + PostgreSQL API for cloud storage, with its Dockerfile, Docker Compose file and database migrations |
+| `.github/workflows/deploy.yml` | Deploys the backend to the VM on every push that changes it |
+| `BUILD.md` | How to build the desktop app from source |
+
 ## Author
 Mehul Sharma\
 Gmail: mehssi2004@gmail.com
