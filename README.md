@@ -51,7 +51,8 @@ Want to build it yourself instead? See [BUILD.md](BUILD.md).
 
 File storage (upload/list/download) talks to a [`backend/`](backend/) Node.js + PostgreSQL
 backend, not Firebase — but as a user, **you don't need to run this yourself.** One instance is
-hosted centrally at `https://vaultwright.duckdns.org`.
+hosted centrally at `https://vaultwright.duckdns.org`. Interactive API documentation is served at
+[`/docs`](https://vaultwright.duckdns.org/docs).
 
 ## Using the IDE
 
@@ -73,8 +74,9 @@ hosted centrally at `https://vaultwright.duckdns.org`.
 | `.github/workflows/deploy.yml` | Deploys the backend to the VM on every push that changes it |
 | `BUILD.md` | How to build the desktop app from source |
 
-## Author
-Mehul Sharma\
-Gmail: mehssi2004@gmail.com
+## Contributing and contact
 
-If you have any suggestions feel free to reach out to me via mail, and if you liked the project, make sure to give a star ⭐️.
+For anything related to contributing to this project, email
+[mehssi2004@gmail.com](mailto:mehssi2004@gmail.com).
+
+Have fun with the app!
