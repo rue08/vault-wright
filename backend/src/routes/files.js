@@ -12,6 +12,41 @@ router.use(requireAuth);
 // alongside C++ code. Anything else is rejected below before it reaches the database.
 const ALLOWED_EXTENSIONS = ['.cpp', '.cc', '.cxx', '.c++', '.h', '.hpp', '.hh', '.hxx', '.h++', '.md', '.txt'];
 
+/**
+ * @openapi
+ * /files:
+ *   post:
+ *     tags: [Files]
+ *     summary: Create or update a file
+ *     description: >
+ *       Create-or-update keyed on (user, filename): uploading an existing filename overwrites its
+ *       content. Returns `201` when a new file was created and `200` when an existing one was updated.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/FileInput'
+ *     responses:
+ *       200:
+ *         description: Existing file updated
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/File' }
+ *       201:
+ *         description: New file created
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/File' }
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
 // POST /files  { filename, content }
 // Create-or-update semantics, keyed on (user_id, filename) -- mirrors the one-document-per-
 // filename model the client already uses against Firestore in storage.cpp.
@@ -46,6 +81,28 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /files:
+ *   get:
+ *     tags: [Files]
+ *     summary: List the caller's files
+ *     description: Metadata only (no content), newest first.
+ *     responses:
+ *       200:
+ *         description: The caller's files
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/FileSummary' }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
 // GET /files -- list the caller's files (metadata only, no content, to keep the listing light).
 router.get('/', async (req, res, next) => {
   try {
@@ -59,6 +116,33 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /files/{id}:
+ *   get:
+ *     tags: [Files]
+ *     summary: Download one file
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: File id
+ *     responses:
+ *       200:
+ *         description: The file, including its content
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/File' }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
 // GET /files/:id -- download one file's content, verifying ownership.
 router.get('/:id', async (req, res, next) => {
   try {
@@ -75,6 +159,30 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /files/{id}:
+ *   delete:
+ *     tags: [Files]
+ *     summary: Delete one file
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: File id
+ *     responses:
+ *       204:
+ *         description: File deleted
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
 // DELETE /files/:id -- verifies ownership before deleting.
 router.delete('/:id', async (req, res, next) => {
   try {
